@@ -56,10 +56,10 @@ def log(text):
     print(text)
 
 def notify(title, text):
-    os.system("notify-send '" + re.escape(title) + "' '"+ re.escape(text) + "'")
+    os.system("/usr/bin/notify-send '" + re.escape(title) + "' '"+ re.escape(text) + "'")
 
 try:
-    os.system('clear')
+    os.system('/usr/bin/clear')
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     print(green + "WEBPAGE MONITOR v1.0" + white)
     print(green + "Not refreshing any more!!" + white)
@@ -93,13 +93,13 @@ try:
             log(green + "Damn! Nothing has changed yet!" + white)
         else:
             log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
-            os.system("espeak 'Alert! Webpage has changed.'")
+            os.system("/usr/bin/espeak 'Alert! Webpage has changed.'")
             notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
             webbrowser.open_new_tab(url)
             with open(fname + '.changed', 'w') as file_:
                 file_.write(newText)
             while True:
-                os.system("play " + args.sound)
+                os.system("/usr/bin/play " + args.sound)
                 time.sleep(0.1)
             exit()
 except Exception as e:

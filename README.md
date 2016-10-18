@@ -8,6 +8,7 @@ Does not work:
 - With cookies
 - With logins
 - Time displays on webpages
+- on Windows
 
 Working on that.
 
