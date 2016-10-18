@@ -21,7 +21,7 @@ For default help from `argparser`,
 ```
 ./wpmon -h
 ```
-
+Oh, and all the sounds are under Creative Commons license, downloaded from `commons.wikimedia.org`.
 Hope it is helpful.
 
 Abilops.
