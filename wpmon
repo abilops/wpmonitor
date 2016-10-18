@@ -1,0 +1,108 @@
+#! /usr/bin/env python3
+import time
+import urllib.request
+import datetime
+import os
+import webbrowser
+import re
+import argparse
+# From Diceware
+
+parser = argparse.ArgumentParser(description='Monitor a webpage by repeatedly checking URL after intervals')
+parser.add_argument('URL', help='URL to page that will be monitored')
+parser.add_argument('-i', '--interval', default=60, help='Seconds to wait between successive checks', type=int, required=False)
+parser.add_argument('-f', '--filename', help='Name of the file to store the downloaded template webpage (first one). Default is URL', required=False, default=None)
+parser.add_argument('-s', '--sound', help='Location of sound file to be played', default='Smoke_alarm.ogg', required=False)
+args = parser.parse_args()
+
+url = args.URL
+interval = args.interval
+if (args.filename is None or args.filename == '__new__'):
+    fname = "HTMLs/"+url.split('://')[1].replace('/','-')
+else:
+    fname = args.filename
+    
+# TODO implement these 2 lines
+ignorefirstchars = 2067
+ignorelastchars = 1
+
+white = "\033[1;37m"
+green = "\033[1;32m"
+red = "\033[1;31m"
+lblue = "\033[1;34m"
+clearline = "\033[1K \033[1G"
+def opn(url):
+    try:
+        with urllib.request.urlopen(url) as page:
+            pageText = page.read()
+        log(lblue + "Page Downloaded")
+        return str(pageText)
+    except:
+        log(red + "Cannot open URL. Are you connected to the internet?" + white)
+        time.sleep(interval/4)
+        return '-1'
+
+def getHTML(url):
+    pageText = '-1'
+    while pageText == '-1':
+        pageText = opn(url)
+    return pageText
+
+def printDate():
+    print(str(datetime.datetime.now()), end='-')
+
+def log(text):
+    printDate()
+    print(text)
+
+def notify(title, text):
+    os.system("notify-send '" + re.escape(title) + "' '"+ re.escape(text) + "'")
+
+try:
+    os.system('clear')
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+    print(green + "WEBPAGE MONITOR v1.0" + white)
+    print(green + "Not refreshing any more!!" + white)
+    print("URL: " + lblue + url + white)
+    print("Interval: " + lblue + str(interval) + " seconds" + white)
+    print("File: " + lblue + fname + white)
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+    if os.path.isfile(fname + ".changed") and args.filename != '__new__':
+        os.remove(fname)
+        os.rename(fname + ".changed", fname)
+        log("Found last change. Using that as template. Fine?")
+    elif os.path.isfile(fname) and os.stat(fname).st_size != 0 and args.filename != '__new__':
+        log("Template file found. Not creating new one.")
+        log("In fact, not even touching it now.")
+    else:
+        with open(fname, 'w') as file_:
+            file_.write(getHTML(url))
+        log("Template file saved" + white);
+
+    while True:
+        for x in range(interval, 0, -1):
+            print(clearline + "Waiting for " + str(x) + " more seconds...", end='', flush=True)
+            time.sleep(1)
+        print(clearline, end='')
+        newText = getHTML(url)
+        with open(fname, 'r') as file_:
+            checkText = file_.read()
+
+        if (checkText == newText):
+            log(green + "Damn! Nothing has changed yet!" + white)
+        else:
+            log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
+            os.system("espeak 'Alert! Webpage has changed.'")
+            notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
+            webbrowser.open_new_tab(url)
+            with open(fname + '.changed', 'w') as file_:
+                file_.write(newText)
+            while True:
+                os.system("play " + args.sound)
+                time.sleep(0.1)
+            exit()
+except Exception as e:
+    log(red + "There is some kind of error (I mean\n" + str(e) + "). Exiting..." + white)
+    notify('Webpage Monitor', 'Crashed due to ' + str(e))
+    exit()
