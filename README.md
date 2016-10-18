@@ -10,7 +10,18 @@ Does not work:
 - Time displays on webpages
 - on Windows
 
-Working on that.
+Working on that (except the Windows part).
+
+##Installation guide
+It's nothing. Just download the zip or clone the repo and then run
+```
+./wpmon http://www.example.com
+```
+For default help from `argparser`,
+```
+./wpmon -h
+```
 
 Hope it is helpful.
+
 Abilops.
