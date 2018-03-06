@@ -7,7 +7,12 @@ import os
 import webbrowser
 import re
 import argparse
+import ssl
 # From Diceware
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
 
 USAG = "'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'"
 
@@ -19,6 +24,7 @@ parser.add_argument('-s', '--sound', help='Location of sound file to be played',
 parser.add_argument('-q', '--quiet', help='Supress output', default=0, required=False)
 parser.add_argument('-m', '--email', help='Send an email as alert instead of sound, browser, nextscript and colour', default=None, required=False)
 parser.add_argument('-n', '--next', help='Script file to run after webpage has changed', default="/usr/bin/python3 /home/abilops/Dev/rg.py", required=False)
+parser.add_argument('-k', '--insecure', help="Don't check website certificates. Good for indian gov websites", required=False, action='store_true')
 args = parser.parse_args()
 url = args.URL
 interval = args.interval
@@ -39,12 +45,16 @@ clearline = "\033[1K \033[1G"
 #returns HTML text of URL
 def opn(url):
     try:
-        with urllib.request.urlopen(url) as page:
-            pageText = page.read().decode('utf-8')# <--- This is useful in a way
+        ctx = ssl.create_default_context()
+        if args.insecure == True:
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+        with urllib.request.urlopen(url,context=ctx) as page:
+            pageText = str(page.read())#.decode('utf-8') <--- This is useful in a way
         log(lblue + "Page Downloaded")
         return pageText # <--- Removed str if decode is applied
-    except:
-        log(red + "Cannot open URL. Are you connected to the internet?" + white)
+    except Exception as e:
+        log(red + "Cannot open URL. Are you connected to the internet? " + str(e) +  white)
         time.sleep(interval/4)
         return '-1'
 
@@ -65,7 +75,9 @@ def log(text):
 
 def notify(title, text):
     os.system("/usr/bin/notify-send '" + re.escape(title) + "' '"+ re.escape(text) + "'")
+
 def send_message(towhom, subject, text, html):
+    return 0
     return requests.post(
         "https://api.mailgun.net/v3/sandbox5376b312271c444c949fffaf8e588b65.mailgun.org/messages",
         auth=("api", "key-99953517a69ca1cf2cef2a9930adeafb"),
@@ -107,20 +119,20 @@ try:
             time.sleep(1)
         print(clearline, end='')
         newText = getHTML(url)
-        with open(fname, 'r') as file_:
+        with open(fname, 'r', encoding='utf-8') as file_:
             checkText = file_.read()
 
         if (checkText == newText):
             log(green + "Damn! Nothing has changed yet!" + white)
         else:
+            with open(fname + '.changed', 'w', encoding='utf-8') as file_:
+                file_.write(newText)
             if args.email == None:
                 log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
                 os.system("/usr/bin/xset dpms force on")
                 os.system("/usr/bin/espeak 'Alert! Webpage has changed.'")
                 notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
                 webbrowser.open_new_tab(url)
-                with open(fname + '.changed', 'w') as file_:
-                    file_.write(newText)
                 if args.next != None:
                     try:
                         os.system("./" + args.next)
@@ -134,8 +146,9 @@ try:
                 text = '<p>Hi!\n'+url+' has changed. Check out the new page below. To go directly, click <a href='+url+'>here</a></p>'
                 print(send_message(['abhure@outlook.com',args.email], url + ' has changed!',text, text + str(newText)))
                 log(red + "Sent an email to " + args.email + ". Restarting..." + white)
-                with open(fname,'w') as file_:
+                with open(fname,'w', encoding='utf-8') as file_:
                     file_.write(newText)
+                    checkText = newText
 except Exception as e:
     log(red + "There is some kind of error (I mean\n" + str(e) + "). Exiting..." + white)
     notify('Webpage Monitor', 'Crashed due to ' + str(e))
