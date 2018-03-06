@@ -25,6 +25,7 @@ parser.add_argument('-q', '--quiet', help='Supress output', default=0, required=
 parser.add_argument('-m', '--email', help='Send an email as alert instead of sound, browser, nextscript and colour', default=None, required=False)
 parser.add_argument('-n', '--next', help='Script file to run after webpage has changed', default="/usr/bin/python3 /home/abilops/Dev/rg.py", required=False)
 parser.add_argument('-k', '--insecure', help="Don't check website certificates. Good for indian gov websites", required=False, action='store_true')
+parser.add_argument('-M', '--trymail', help="Don't send actual email. Just simulate", required=False, action='store_true')
 args = parser.parse_args()
 url = args.URL
 interval = args.interval
@@ -50,7 +51,8 @@ def opn(url):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
         with urllib.request.urlopen(url,context=ctx) as page:
-            pageText = str(page.read())#.decode('utf-8') <--- This is useful in a way
+            pageText = str(page.read())
+#            pageText = page.read().decode('utf-8')
         log(lblue + "Page Downloaded")
         return pageText # <--- Removed str if decode is applied
     except Exception as e:
@@ -77,7 +79,8 @@ def notify(title, text):
     os.system("/usr/bin/notify-send '" + re.escape(title) + "' '"+ re.escape(text) + "'")
 
 def send_message(towhom, subject, text, html):
-    return 0
+    if args.trymail == True:
+        return 0
     return requests.post(
         "https://api.mailgun.net/v3/sandbox5376b312271c444c949fffaf8e588b65.mailgun.org/messages",
         auth=("api", "key-99953517a69ca1cf2cef2a9930adeafb"),
