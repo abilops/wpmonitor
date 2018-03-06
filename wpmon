@@ -9,6 +9,10 @@ import re
 import argparse
 # From Diceware
 
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
 USAG = "'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'"
 
 parser = argparse.ArgumentParser(description='Monitor a webpage by repeatedly checking URL after intervals')
@@ -66,6 +70,7 @@ def log(text):
 def notify(title, text):
     os.system("/usr/bin/notify-send '" + re.escape(title) + "' '"+ re.escape(text) + "'")
 def send_message(towhom, subject, text, html):
+    return 0
     return requests.post(
         "https://api.mailgun.net/v3/sandbox5376b312271c444c949fffaf8e588b65.mailgun.org/messages",
         auth=("api", "key-99953517a69ca1cf2cef2a9930adeafb"),
@@ -113,14 +118,14 @@ try:
         if (checkText == newText):
             log(green + "Damn! Nothing has changed yet!" + white)
         else:
+            with open(fname + '.changed', 'w') as file_:
+                file_.write(newText)
             if args.email == None:
                 log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
                 os.system("/usr/bin/xset dpms force on")
                 os.system("/usr/bin/espeak 'Alert! Webpage has changed.'")
                 notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
                 webbrowser.open_new_tab(url)
-                with open(fname + '.changed', 'w') as file_:
-                    file_.write(newText)
                 if args.next != None:
                     try:
                         os.system("./" + args.next)
@@ -134,8 +139,8 @@ try:
                 text = '<p>Hi!\n'+url+' has changed. Check out the new page below. To go directly, click <a href='+url+'>here</a></p>'
                 print(send_message(['abhure@outlook.com',args.email], url + ' has changed!',text, text + str(newText)))
                 log(red + "Sent an email to " + args.email + ". Restarting..." + white)
-                with open(fname,'w') as file_:
-                    file_.write(newText)
+#                with open(fname,'w') as file_:
+#                    file_.write(newText)
 except Exception as e:
     log(red + "There is some kind of error (I mean\n" + str(e) + "). Exiting..." + white)
     notify('Webpage Monitor', 'Crashed due to ' + str(e))
