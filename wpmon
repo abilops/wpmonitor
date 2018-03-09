@@ -144,7 +144,7 @@ try:
                 webbrowser.open_new_tab(url)
                 if args.next != None:
                     try:
-                        os.system("./" + args.next)
+                        os.system("./{} > /dev/null &2>1".format(args.next))
                     except Exception as e:
                         log(red + "Error running " + args.next + " " + str(e) + white)
                 # Try Ctrl-C ing this
