@@ -103,7 +103,7 @@ try:
         if re.search('^[a-zA-Z0-9_\.]+@[A-Za-z0-9]+\.[a-z]{2,3}$', args.email) == None:
             log(red + "Invalid email address. Retry" + white)
 #           exit()
-
+    downloadedNewTemplate = False
     if os.path.isfile(fname + ".changed") and args.filename != '__new__':
         os.remove(fname)
         os.rename(fname + ".changed", fname)
@@ -114,25 +114,31 @@ try:
     else:
         with open(fname, 'w') as file_:
             file_.write(getHTML(url))
+            downloadedNewTemplate = True
         log("Template file saved" + white);
 
     while True:
-        for x in range(interval, 0, -1):
-            print(clearline + "Waiting for " + str(x) + " more seconds...", end='', flush=True)
-            time.sleep(1)
-        print(clearline, end='')
-        newText = getHTML(url)
+        # Didn't you just download it right now?
+        if not downloadedNewTemplate:
+            # Get new
+            newText = getHTML(url)
+            downloadedNewTemplate=False
+        else:
+            with open(fname, 'r') as file_:
+                newText = file_.read()
+        # Read check file
         with open(fname, 'r', encoding='utf-8') as file_:
             checkText = file_.read()
-
         if (checkText == newText):
             log(green + "Damn! Nothing has changed yet!" + white)
         else:
+            # Write changed to disk
             with open(fname + '.changed', 'w', encoding='utf-8') as file_:
                 file_.write(newText)
             if args.email == None:
                 log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
-                os.system("/usr/bin/xset dpms force on")
+                # Turn on the screen
+                os.system("/usr/bin/xset dpms force on")        
                 os.system("/usr/bin/espeak 'Alert! Webpage has changed.'")
                 notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
                 webbrowser.open_new_tab(url)
@@ -141,17 +147,28 @@ try:
                         os.system("./" + args.next)
                     except Exception as e:
                         log(red + "Error running " + args.next + " " + str(e) + white)
+                # Try Ctrl-C ing this
                 while True:
                     os.system("/usr/bin/play " + args.sound)
                     time.sleep(0.1)
                 exit()
+            # If the user wants email alerts
             else:
                 text = '<p>Hi!\n'+url+' has changed. Check out the new page below. To go directly, click <a href='+url+'>here</a></p>'
+                # To, sub, text, html
+                # Html needs text too clients choose one of the two.
                 print(send_message(['abhure@outlook.com',args.email], url + ' has changed!',text, text + str(newText)))
                 log(red + "Sent an email to " + args.email + ". Restarting..." + white)
+                # Absorb changes into check file
+                # absorb changes into check variabel
                 with open(fname,'w', encoding='utf-8') as file_:
                     file_.write(newText)
-                    checkText = newText
+        # Wait for however long
+        for x in range(interval, 0, -1):
+            print(clearline + "Waiting for " + str(x) + " more seconds...", end='', flush=True)
+            time.sleep(1)
+        print(clearline, end='')
+
 except Exception as e:
     log(red + "There is some kind of error (I mean\n" + str(e) + "). Exiting..." + white)
     notify('Webpage Monitor', 'Crashed due to ' + str(e))
