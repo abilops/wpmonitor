@@ -10,9 +10,6 @@ import argparse
 import ssl
 # From Diceware
 
-abspath = os.path.abspath(__file__)
-dname = os.path.dirname(abspath)
-os.chdir(dname)
 
 USAG = "'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'"
 
@@ -29,13 +26,11 @@ parser.add_argument('-M', '--trymail', help="Don't send actual email. Just simul
 args = parser.parse_args()
 url = args.URL
 interval = args.interval
+
 if (args.filename is None or args.filename == '__new__'):
     fname = "HTMLs/"+url.split('://')[1].replace('/','-')
 else:
     fname = args.filename
-# TODO implement these 2 lines
-ignorefirstchars = 2067
-ignorelastchars = 1
 
 white = "\033[1;37m"
 green = "\033[1;32m"
@@ -89,7 +84,19 @@ def send_message(towhom, subject, text, html):
               "subject": subject,
               "text": text,
               "html": html})
-try:
+def wait(interval):
+    if args.quiet != 0:
+        print("Waiting for {} more seconds...".format(interval), flush=True)
+        time.sleep(interval)
+    else:
+        for x in range(interval, 0, -1):
+            print(clearline + "Waiting for {} more seconds...".format(x), end='', flush=True)
+            time.sleep(1)
+        print(clearline, end='')
+
+def printHeader():
+    if args.quiet != 0:
+        return
     os.system('/usr/bin/clear')
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     print(green + "WEBPAGE MONITOR v1.0" + white)
@@ -99,10 +106,33 @@ try:
     print("File: " + lblue + fname + white)
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
 
-    if args.email != None:
-        if re.search('^[a-zA-Z0-9_\.]+@[A-Za-z0-9]+\.[a-z]{2,3}$', args.email) == None:
+def checkEmail(email):
+    if email != None:
+        if re.search('^[a-zA-Z0-9_\.]+@[A-Za-z0-9]+\.[a-z]{2,3}$', email) == None:
             log(red + "Invalid email address. Retry" + white)
 #           exit()
+def readFile(path):
+    try:
+        with open(path, 'r') as f:
+            return f.read()
+    except:
+        return None
+def writeFile(path, content):
+    try:
+        with open(path, 'w') as f:
+            f.write(content)
+            return 0
+    except:
+        return None
+# Go to the right directory
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+try:
+    printHeader()
+    checkEmail(args.email)
+    #send_message(['abhure@outlook.com'],'Started',interval,interval)
     downloadedNewTemplate = False
     if os.path.isfile(fname + ".changed") and args.filename != '__new__':
         os.remove(fname)
@@ -112,9 +142,8 @@ try:
         log("Template file found. Not creating new one.")
         log("In fact, not even touching it now.")
     else:
-        with open(fname, 'w') as file_:
-            file_.write(getHTML(url))
-            downloadedNewTemplate = True
+        writeFile(fname, getHTML(url))
+        downloadedNewTemplate = True
         log("Template file saved" + white);
 
     while True:
@@ -124,32 +153,29 @@ try:
             newText = getHTML(url)
             downloadedNewTemplate=False
         else:
-            with open(fname, 'r') as file_:
-                newText = file_.read()
+            newText = readFile(fname)
         # Read check file
-        with open(fname, 'r', encoding='utf-8') as file_:
-            checkText = file_.read()
+        checkText = readFile(fname)
         if (checkText == newText):
             log(green + "Damn! Nothing has changed yet!" + white)
         else:
             # Write changed to disk
-            with open(fname + '.changed', 'w', encoding='utf-8') as file_:
-                file_.write(newText)
+            writeFile(fname+'.changed', newText)
             if args.email == None:
                 log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
                 # Turn on the screen
                 os.system("/usr/bin/xset dpms force on")        
-                os.system("/usr/bin/espeak 'Alert! Webpage has changed.'")
+                os.system("/usr/bin/espeak 'Alert! Webpage has changed.' &")
                 notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
                 webbrowser.open_new_tab(url)
                 if args.next != None:
                     try:
                         os.system("./{} > /dev/null &2>1".format(args.next))
                     except Exception as e:
-                        log(red + "Error running " + args.next + " " + str(e) + white)
+                        log(red + "Error running {} {} {}".format(args.next, str(e), white))
                 # Try Ctrl-C ing this
                 while True:
-                    os.system("/usr/bin/play " + args.sound)
+                    os.system("/usr/bin/play {}".format(args.sound))
                     time.sleep(0.1)
                 exit()
             # If the user wants email alerts
@@ -161,14 +187,9 @@ try:
                 log(red + "Sent an email to " + args.email + ". Restarting..." + white)
                 # Absorb changes into check file
                 # absorb changes into check variabel
-                with open(fname,'w', encoding='utf-8') as file_:
-                    file_.write(newText)
+                writeFile(fname, newText)
         # Wait for however long
-        for x in range(interval, 0, -1):
-            print(clearline + "Waiting for " + str(x) + " more seconds...", end='', flush=True)
-            time.sleep(1)
-        print(clearline, end='')
-
+        wait(interval)
 except Exception as e:
     log(red + "There is some kind of error (I mean\n" + str(e) + "). Exiting..." + white)
     notify('Webpage Monitor', 'Crashed due to ' + str(e))
