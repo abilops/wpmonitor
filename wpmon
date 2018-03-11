@@ -75,7 +75,7 @@ def notify(title, text):
 
 def send_message(towhom, subject, text, html):
     if args.trymail == True:
-        return 0
+        return writeFile('mail{}'.format(datetime.datetime.now()),towhom[0]+subject)
     return requests.post(
         "https://api.mailgun.net/v3/sandbox5376b312271c444c949fffaf8e588b65.mailgun.org/messages",
         auth=("api", "key-99953517a69ca1cf2cef2a9930adeafb"),
@@ -84,6 +84,7 @@ def send_message(towhom, subject, text, html):
               "subject": subject,
               "text": text,
               "html": html})
+
 def wait(interval):
     if args.quiet != 0:
         print("Waiting for {} more seconds...".format(interval), flush=True)
@@ -132,7 +133,6 @@ os.chdir(dname)
 try:
     printHeader()
     checkEmail(args.email)
-    #send_message(['abhure@outlook.com'],'Started',interval,interval)
     downloadedNewTemplate = False
     if os.path.isfile(fname + ".changed") and args.filename != '__new__':
         os.remove(fname)
