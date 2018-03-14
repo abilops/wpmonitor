@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 import time
 import urllib.request
 import requests
@@ -147,7 +147,7 @@ try:
         log("Template file saved" + white);
 
     while True:
-        # Didn't you just download it right now?
+        # Didn't you st download it right now?
         if not downloadedNewTemplate:
             # Get new
             newText = getHTML(url)
@@ -161,6 +161,12 @@ try:
         else:
             # Write changed to disk
             writeFile(fname+'.changed', newText)
+            if args.next != None:
+                try:
+                    os.system("./{} > /dev/null &2>1".format(args.next))
+                except Exception as e:
+                    log(red + "Error running {} {} {}".format(args.next, str(e), white))
+
             if args.email == None:
                 log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
                 # Turn on the screen
@@ -168,11 +174,6 @@ try:
                 os.system("/usr/bin/espeak 'Alert! Webpage has changed.' &")
                 notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
                 webbrowser.open_new_tab(url)
-                if args.next != None:
-                    try:
-                        os.system("./{} > /dev/null &2>1".format(args.next))
-                    except Exception as e:
-                        log(red + "Error running {} {} {}".format(args.next, str(e), white))
                 # Try Ctrl-C ing this
                 while True:
                     os.system("/usr/bin/play {}".format(args.sound))
@@ -188,6 +189,7 @@ try:
                 # Absorb changes into check file
                 # absorb changes into check variabel
                 writeFile(fname, newText)
+                checkText = newText
         # Wait for however long
         wait(interval)
 except Exception as e:
