@@ -20,7 +20,7 @@ parser.add_argument('-f', '--filename', help='Name of the file to store the down
 parser.add_argument('-s', '--sound', help='Location of sound file to be played', default='Smoke_alarm.ogg', required=False)
 parser.add_argument('-q', '--quiet', help='Supress non-red output', default=0, required=False)
 parser.add_argument('-m', '--email', help='Send an email as alert instead of sound, browser, nextscript and colour', default=None, required=False)
-parser.add_argument('-n', '--next', help='Script file to run after webpage has changed', default="/usr/bin/python3 /home/abilops/Dev/rg.py", required=False)
+parser.add_argument('-n', '--next', help='Script file to run after webpage has changed', default=None, required=False)
 parser.add_argument('-k', '--insecure', help="Don't check website certificates. Good for indian gov websites", required=False, action='store_true')
 parser.add_argument('-M', '--trymail', help="Don't send actual email. Just simulate", required=False, action='store_true')
 args = parser.parse_args()
@@ -162,6 +162,7 @@ try:
             # Write changed to disk
             writeFile(fname+'.changed', newText)
             if args.next != None:
+                log("Running next script")
                 try:
                     os.system("./{} > /dev/null &2>1".format(args.next))
                 except Exception as e:
@@ -189,7 +190,7 @@ try:
                 # Absorb changes into check file
                 # absorb changes into check variabel
                 writeFile(fname, newText)
-                checkText = newText
+#                checkText = newText
         # Wait for however long
         wait(interval)
 except Exception as e:
