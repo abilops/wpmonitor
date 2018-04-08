@@ -147,7 +147,7 @@ try:
         log("Template file saved" + white);
 
     while True:
-        # Didn't you st download it right now?
+        # Didn't you just download it right now?
         if not downloadedNewTemplate:
             # Get new
             newText = getHTML(url)
