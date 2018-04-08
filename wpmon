@@ -46,8 +46,8 @@ def opn(url):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
         with urllib.request.urlopen(url,context=ctx) as page:
-            pageText = str(page.read())
-#            pageText = page.read().decode('utf-8')
+#            pageText = str(page.read())
+            pageText = page.read().decode('utf-8')
         log(lblue + "Page Downloaded")
         return pageText # <--- Removed str if decode is applied
     except Exception as e:
@@ -61,6 +61,7 @@ def getHTML(url):
     while pageText == '-1':
         pageText = opn(url)
     pageText = re.sub(';jsessionid=[^\s\'\"]*', '', pageText)
+    print(pageText[:200])
     return pageText
 
 def printDate():
@@ -115,8 +116,8 @@ def checkEmail(email):
 #           exit()
 def readFile(path):
     try:
-        with open(path, 'r') as f:
-            return f.read()
+        with open(path, 'rb') as f:
+            return f.read().decode('utf-8')
     except:
         return None
 def writeFile(path, content):
