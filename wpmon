@@ -60,6 +60,7 @@ def getHTML(url):
     pageText = '-1'
     while pageText == '-1':
         pageText = opn(url)
+    pageText = re.sub(';jsessionid=[^\s\'\"]*', '', pageText)
     return pageText
 
 def printDate():
