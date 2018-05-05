@@ -8,11 +8,16 @@ import webbrowser
 import re
 import argparse
 import ssl
+import configparser
+
+config = configparser.ConfigParser()
+config.read('wpmon.conf')
+deft = config['DEFAULT']
+USAG = deft['useragent']
+print(USAG)
+#USAG = "'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'"
+
 # From Diceware
-
-
-USAG = "'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'"
-
 parser = argparse.ArgumentParser(description='Monitor a webpage by repeatedly checking URL after intervals')
 parser.add_argument('URL', help='URL to page that will be monitored')
 parser.add_argument('-i', '--interval', default=60, help='Seconds to wait between successive checks', type=int, required=False)
