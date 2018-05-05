@@ -17,12 +17,13 @@ parser = argparse.ArgumentParser(description='Monitor a webpage by repeatedly ch
 parser.add_argument('URL', help='URL to page that will be monitored')
 parser.add_argument('-i', '--interval', default=60, help='Seconds to wait between successive checks', type=int, required=False)
 parser.add_argument('-f', '--filename', help='Name of the file to store the downloaded template webpage (first one). Default is URL', required=False, default=None)
-parser.add_argument('-s', '--sound', help='Location of sound file to be played', default='Smoke_alarm.ogg', required=False)
+parser.add_argument('-s', '--sound', help='Location of sound file to be played', default='sounds/Smoke_alarm.wav', required=False)
 parser.add_argument('-q', '--quiet', help='Supress non-red output', default=0, required=False)
 parser.add_argument('-m', '--email', help='Send an email as alert instead of sound, browser, nextscript and colour', default=None, required=False)
 parser.add_argument('-n', '--next', help='Script file to run after webpage has changed', default=None, required=False)
 parser.add_argument('-k', '--insecure', help="Don't check website certificates. Good for indian gov websites", required=False, action='store_true')
 parser.add_argument('-M', '--trymail', help="Don't send actual email. Just simulate", required=False, action='store_true')
+parser.add_argument('-H', '--headless', help="Headless mode", required=False, default=False, action='store_true')
 args = parser.parse_args()
 url = args.URL
 interval = args.interval
@@ -130,6 +131,15 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
+def getAttentionAndBrowser(url):
+    if args.headless == False:
+        # Turn on the screen
+        os.system("/usr/bin/xset dpms force on")        
+        os.system("/usr/bin/espeak 'Alert! Webpage has changed.' &")
+        notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
+        webbrowser.open_new_tab(url)
+
+
 try:
     printHeader()
     checkEmail(args.email)
@@ -164,20 +174,16 @@ try:
             if args.next != None:
                 log("Running next script")
                 try:
-                    os.system("./{} > /dev/null &2>1".format(args.next))
+                    os.system("./{} > /dev/null 2>&1".format(args.next))
                 except Exception as e:
                     log(red + "Error running {} {} {}".format(args.next, str(e), white))
 
             if args.email == None:
                 log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
-                # Turn on the screen
-                os.system("/usr/bin/xset dpms force on")        
-                os.system("/usr/bin/espeak 'Alert! Webpage has changed.' &")
-                notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
-                webbrowser.open_new_tab(url)
+                getAttentionAndBrowser(url)
                 # Try Ctrl-C ing this
                 while True:
-                    os.system("/usr/bin/play {}".format(args.sound))
+                    os.system("/usr/bin/aplay {}".format(args.sound))
                     time.sleep(0.1)
                 exit()
             # If the user wants email alerts
@@ -190,7 +196,7 @@ try:
                 # Absorb changes into check file
                 # absorb changes into check variabel
                 writeFile(fname, newText)
-#                checkText = newText
+#               checkText = newText
         # Wait for however long
         wait(interval)
 except Exception as e:
