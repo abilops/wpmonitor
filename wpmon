@@ -1,64 +1,109 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 import time
 import urllib.request
+import requests
 import datetime
 import os
 import webbrowser
 import re
 import argparse
+import ssl
+import configparser
 # From Diceware
+
+
+USAG = "'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'"
 
 parser = argparse.ArgumentParser(description='Monitor a webpage by repeatedly checking URL after intervals')
 parser.add_argument('URL', help='URL to page that will be monitored')
 parser.add_argument('-i', '--interval', default=60, help='Seconds to wait between successive checks', type=int, required=False)
 parser.add_argument('-f', '--filename', help='Name of the file to store the downloaded template webpage (first one). Default is URL', required=False, default=None)
-parser.add_argument('-s', '--sound', help='Location of sound file to be played', default='Smoke_alarm.ogg', required=False)
+parser.add_argument('-s', '--sound', help='Location of sound file to be played', default='sounds/Smoke_alarm.wav', required=False)
+parser.add_argument('-q', '--quiet', help='Supress non-red output', default=0, required=False)
+parser.add_argument('-m', '--email', help='Send an email as alert instead of sound, browser, nextscript and colour', default=None, required=False)
+parser.add_argument('-n', '--next', help='Script file to run after webpage has changed', default=None, required=False)
+parser.add_argument('-k', '--insecure', help="Don't check website certificates. Good for indian gov websites", required=False, action='store_true')
+parser.add_argument('-M', '--trymail', help="Don't send actual email. Just simulate", required=False, action='store_true')
+parser.add_argument('-H', '--headless', help="Headless mode", required=False, default=False, action='store_true')
 args = parser.parse_args()
+
+config = configparser.ConfigParser()
+config.read('wpmon.conf')
 
 url = args.URL
 interval = args.interval
+
 if (args.filename is None or args.filename == '__new__'):
     fname = "HTMLs/"+url.split('://')[1].replace('/','-')
 else:
     fname = args.filename
-    
-# TODO implement these 2 lines
-ignorefirstchars = 2067
-ignorelastchars = 1
 
 white = "\033[1;37m"
 green = "\033[1;32m"
 red = "\033[1;31m"
 lblue = "\033[1;34m"
 clearline = "\033[1K \033[1G"
+
+#returns HTML text of URL
 def opn(url):
     try:
-        with urllib.request.urlopen(url) as page:
-            pageText = page.read()
+        ctx = ssl.create_default_context()
+        if args.insecure == True:
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+        with urllib.request.urlopen(url,context=ctx) as page:
+            pageText = page.read().decode('utf-8')
         log(lblue + "Page Downloaded")
-        return str(pageText)
-    except:
-        log(red + "Cannot open URL. Are you connected to the internet?" + white)
+        return pageText # <--- Removed str if decode is applied
+    except Exception as e:
+        log(red + "Cannot open URL. Are you connected to the internet? " + str(e) +  white)
         time.sleep(interval/4)
         return '-1'
 
+# is RESPONSIBLE for returning HTML
 def getHTML(url):
     pageText = '-1'
     while pageText == '-1':
         pageText = opn(url)
+    pageText = re.sub(';jsessionid=[^\s\'\"]*', '', pageText)
     return pageText
 
 def printDate():
     print(str(datetime.datetime.now()), end='-')
 
 def log(text):
-    printDate()
-    print(text)
+	if args.quiet == 0 or text.startswith(red):
+		printDate()
+		print(text)
 
 def notify(title, text):
     os.system("/usr/bin/notify-send '" + re.escape(title) + "' '"+ re.escape(text) + "'")
 
-try:
+def send_message(towhom, subject, text, html):
+    if args.trymail == True:
+        return writeFile('mail{}'.format(datetime.datetime.now()),towhom[0]+subject)
+    return requests.post(
+        config.get('DEFAULT','email_posturl'),
+        auth=(config.get('DEFAULT', 'email_auth_username'), config.get('DEFAULT', 'email_auth_key')),
+        data={"from": config.get('DEFAULT', 'email_from'),
+              "to": towhom,
+              "subject": subject,
+              "text": text,
+              "html": html})
+
+def wait(interval):
+    if args.quiet != 0:
+        print("Waiting for {} more seconds...".format(interval), flush=True)
+        time.sleep(interval)
+    else:
+        for x in range(interval, 0, -1):
+            print(clearline + "Waiting for {} more seconds...".format(x), end='', flush=True)
+            time.sleep(1)
+        print(clearline, end='')
+
+def printHeader():
+    if args.quiet != 0:
+        return
     os.system('/usr/bin/clear')
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     print(green + "WEBPAGE MONITOR v1.0" + white)
@@ -68,6 +113,42 @@ try:
     print("File: " + lblue + fname + white)
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
 
+def checkEmail(email):
+    if email != None:
+        if re.search('^[a-zA-Z0-9_\.]+@[A-Za-z0-9]+\.[a-z]{2,3}$', email) == None:
+            log(red + "Invalid email address. Retry" + white)
+#           exit()
+def readFile(path):
+    try:
+        with open(path, 'rb') as f:
+            return f.read().decode('utf-8')
+    except:
+        return None
+def writeFile(path, content):
+    try:
+        with open(path, 'w') as f:
+            f.write(content)
+            return 0
+    except:
+        return None
+# Go to the right directory
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+def getAttentionAndBrowser(url):
+    if args.headless == False:
+        # Turn on the screen
+        os.system("/usr/bin/xset dpms force on")        
+        os.system("/usr/bin/espeak 'Alert! Webpage has changed.' &")
+        notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
+        webbrowser.open_new_tab(url)
+
+
+try:
+    printHeader()
+    checkEmail(args.email)
+    downloadedNewTemplate = False
     if os.path.isfile(fname + ".changed") and args.filename != '__new__':
         os.remove(fname)
         os.rename(fname + ".changed", fname)
@@ -76,32 +157,53 @@ try:
         log("Template file found. Not creating new one.")
         log("In fact, not even touching it now.")
     else:
-        with open(fname, 'w') as file_:
-            file_.write(getHTML(url))
+        writeFile(fname, getHTML(url))
+        downloadedNewTemplate = True
         log("Template file saved" + white);
 
     while True:
-        for x in range(interval, 0, -1):
-            print(clearline + "Waiting for " + str(x) + " more seconds...", end='', flush=True)
-            time.sleep(1)
-        print(clearline, end='')
-        newText = getHTML(url)
-        with open(fname, 'r') as file_:
-            checkText = file_.read()
-
+        # Didn't you just download it right now?
+        if not downloadedNewTemplate:
+            # Get new
+            newText = getHTML(url)
+        else:
+            newText = readFile(fname)
+            downloadedNewTemplate=False
+        # Read check file
+        checkText = readFile(fname)
         if (checkText == newText):
             log(green + "Damn! Nothing has changed yet!" + white)
         else:
-            log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
-            os.system("/usr/bin/espeak 'Alert! Webpage has changed.'")
-            notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
-            webbrowser.open_new_tab(url)
-            with open(fname + '.changed', 'w') as file_:
-                file_.write(newText)
-            while True:
-                os.system("/usr/bin/play " + args.sound)
-                time.sleep(0.1)
-            exit()
+            # Write changed to disk
+            writeFile(fname+'.changed', newText)
+            if args.next != None:
+                log("Running next script")
+                try:
+                    os.system("./{} > /dev/null 2>&1".format(args.next))
+                except Exception as e:
+                    log(red + "Error running {} {} {}".format(args.next, str(e), white))
+
+            if args.email == None:
+                log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
+                getAttentionAndBrowser(url)
+                # Try Ctrl-C ing this
+                while True:
+                    os.system("/usr/bin/aplay {}".format(args.sound))
+                    time.sleep(0.1)
+                exit()
+            # If the user wants email alerts
+            else:
+                text = config.get('DEFAULT', 'email_text').replace('__url__', url)
+                # To, sub, text, html
+                # Html needs text too clients choose one of the two.
+                print(send_message([config.get('DEFAULT', 'email_to'),args.email], config.get('DEFAULT', 'email_subject').replace('__url__', url) ,text, text + str(newText)))
+                log(red + "Sent an email to " + args.email + ". Restarting..." + white)
+                # Absorb changes into check file
+                # absorb changes into check variabel
+                writeFile(fname, newText)
+#               checkText = newText
+        # Wait for however long
+        wait(interval)
 except Exception as e:
     log(red + "There is some kind of error (I mean\n" + str(e) + "). Exiting..." + white)
     notify('Webpage Monitor', 'Crashed due to ' + str(e))
