@@ -9,6 +9,7 @@ import re
 import argparse
 import ssl
 import configparser
+import json
 # From Diceware
 
 
@@ -65,7 +66,6 @@ def getHTML(url):
     pageText = '-1'
     while pageText == '-1':
         pageText = opn(url)
-    pageText = re.sub(';jsessionid=[^\s\'\"]*', '', pageText)
     return pageText
 
 def printDate():
@@ -90,6 +90,13 @@ def send_message(towhom, subject, text, html):
               "subject": subject,
               "text": text,
               "html": html})
+
+def sendPush(text):
+   hdr = {'Authorization': config.get('DEFAULT','push_token'), 'Content-Type': 'application/json'}
+   payload = {'body':text, 'message_type': 'text/plain'}
+   url = config.get('DEFAULT', 'push_url')
+   r = requests.post(url, headers=hdr, data=json.dumps(payload))
+   return r.text
 
 def wait(interval):
     if args.quiet != 0:
@@ -144,6 +151,9 @@ def getAttentionAndBrowser(url):
         notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
         webbrowser.open_new_tab(url)
 
+def stripStupidDeltas(t):
+    t = re.sub(';jsessionid=[^\s\'\"]*', '', t)
+    return False
 
 try:
     printHeader()
@@ -171,7 +181,7 @@ try:
             downloadedNewTemplate=False
         # Read check file
         checkText = readFile(fname)
-        if (checkText == newText):
+        if (checkText == newText): 
             log(green + "Damn! Nothing has changed yet!" + white)
         else:
             # Write changed to disk
@@ -182,7 +192,7 @@ try:
                     os.system("./{} > /dev/null 2>&1".format(args.next))
                 except Exception as e:
                     log(red + "Error running {} {} {}".format(args.next, str(e), white))
-
+            sendPush("{} has changed!".format(url))
             if args.email == None:
                 log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
                 getAttentionAndBrowser(url)
