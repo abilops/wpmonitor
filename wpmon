@@ -52,7 +52,10 @@ def opn(url):
         if args.insecure == True:
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
-        with urllib.request.urlopen(url,context=ctx) as page:
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': USAG})
+        with urllib.request.urlopen(req, context=ctx) as page:
             pageText = page.read().decode('utf-8')
         log(lblue + "Page Downloaded")
         return pageText # <--- Removed str if decode is applied
@@ -66,7 +69,7 @@ def getHTML(url):
     pageText = '-1'
     while pageText == '-1':
         pageText = opn(url)
-    return pageText
+    return stripStupidDeltas(pageText)
 
 def printDate():
     print(str(datetime.datetime.now()), end='-')
@@ -153,7 +156,8 @@ def getAttentionAndBrowser(url):
 
 def stripStupidDeltas(t):
     t = re.sub(';jsessionid=[^\s\'\"]*', '', t)
-    return False
+    t = re.sub("<div>[\S\s]*.*quotes.*</div>", 'Stupid Quote', t)
+    return t
 
 try:
     printHeader()
