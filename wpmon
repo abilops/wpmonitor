@@ -9,13 +9,11 @@ import re
 import argparse
 import ssl
 import configparser
+import json
 
 config = configparser.ConfigParser()
 config.read('defaults.conf')
 config.read('wpmon.conf')
-deft = config['DEFAULT']
-USAG = deft['useragent']
-
 #USAG = "'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'"
 
 # From Diceware
@@ -33,10 +31,11 @@ parser.add_argument('-k', '--insecure', help="Don't check website certificates. 
 parser.add_argument('-M', '--trymail', help="Don't send actual email. Just simulate", required=False, action='store_true')
 parser.add_argument('-H', '--headless', help="Headless mode", required=False, default=False, action='store_true')
 parser.set_defaults(**config[args[0].section])
+args = parser.parse_args()
 
 url = args.URL
 interval = args.interval
-
+USAG = config.get(args.section, 'USAG')
 if (args.filename is None or args.filename == '__new__'):
     fname = "HTMLs/"+url.split('://')[1].replace('/','-')
 else:
