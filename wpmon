@@ -21,9 +21,9 @@ USAG = deft['useragent']
 # From Diceware
 parser = argparse.ArgumentParser(description='Monitor a webpage by repeatedly checking URL after intervals')
 parser.add_argument('-c', '--section', help='Use preset section from configuration file', required=False, default='DEFAULT')
-args = parser.parse_args()
+args = parser.parse_known_args()
 parser.add_argument('URL', help='URL to page that will be monitored')
-parser.add_argument('-i', '--interval', default=config.get(args.section,'interval'), help='Seconds to wait between successive checks', type=int, required=False)
+parser.add_argument('-i', '--interval', default=60, help='Seconds to wait between successive checks', type=int, required=False)
 parser.add_argument('-f', '--filename', help='Name of the file to store the downloaded template webpage (first one). Default is URL', required=False, default=None)
 parser.add_argument('-s', '--sound', help='Location of sound file to be played', default='sounds/Smoke_alarm.wav', required=False)
 parser.add_argument('-q', '--quiet', help='Supress non-red output', default=0, required=False)
@@ -32,7 +32,7 @@ parser.add_argument('-n', '--next', help='Script file to run after webpage has c
 parser.add_argument('-k', '--insecure', help="Don't check website certificates. Good for indian gov websites", required=False, action='store_true')
 parser.add_argument('-M', '--trymail', help="Don't send actual email. Just simulate", required=False, action='store_true')
 parser.add_argument('-H', '--headless', help="Headless mode", required=False, default=False, action='store_true')
-args = parser.parse_args()
+parser.set_defaults(**config[args[0].section])
 
 url = args.URL
 interval = args.interval
@@ -55,7 +55,10 @@ def opn(url):
         if args.insecure == True:
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
-        with urllib.request.urlopen(url,context=ctx) as page:
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': USAG})
+        with urllib.request.urlopen(req, context=ctx) as page:
             pageText = page.read().decode('utf-8')
         log(lblue + "Page Downloaded")
         return pageText # <--- Removed str if decode is applied
@@ -69,8 +72,7 @@ def getHTML(url):
     pageText = '-1'
     while pageText == '-1':
         pageText = opn(url)
-    pageText = re.sub(';jsessionid=[^\s\'\"]*', '', pageText)
-    return pageText
+    return stripStupidDeltas(pageText)
 
 def printDate():
     print(str(datetime.datetime.now()), end='-')
@@ -87,13 +89,20 @@ def send_message(towhom, subject, text, html):
     if args.trymail == True:
         return writeFile('mail{}'.format(datetime.datetime.now()),towhom[0]+subject)
     return requests.post(
-        "https://api.mailgun.net/v3/sandbox5376b312271c444c949fffaf8e588b65.mailgun.org/messages",
-        auth=("api", "key-99953517a69ca1cf2cef2a9930adeafb"),
-        data={"from": "WPMonitor on RPi <wpmonitor.pi2bach@sandbox5376b312271c444c949fffaf8e588b65.mailgun.org>",
+        config.get('DEFAULT','email_posturl'),
+        auth=(config.get('DEFAULT', 'email_auth_username'), config.get('DEFAULT', 'email_auth_key')),
+        data={"from": config.get('DEFAULT', 'email_from'),
               "to": towhom,
               "subject": subject,
               "text": text,
               "html": html})
+
+def sendPush(text):
+   hdr = {'Authorization': config.get('DEFAULT','push_token'), 'Content-Type': 'application/json'}
+   payload = {'body':text, 'message_type': 'text/plain'}
+   url = config.get('DEFAULT', 'push_url')
+   r = requests.post(url, headers=hdr, data=json.dumps(payload))
+   return r.text
 
 def wait(interval):
     if args.quiet != 0:
@@ -148,6 +157,10 @@ def getAttentionAndBrowser(url):
         notify('Webpage Monitor', url + ' has changed. Opening in new browser tab.\nFingers crossed!')
         webbrowser.open_new_tab(url)
 
+def stripStupidDeltas(t):
+    t = re.sub(';jsessionid=[^\s\'\"]*', '', t)
+    t = re.sub("<div>[\S\s]*.*quotes.*</div>", 'Stupid Quote', t)
+    return t
 
 try:
     printHeader()
@@ -186,7 +199,7 @@ try:
                     os.system("./{} > /dev/null 2>&1".format(args.next))
                 except Exception as e:
                     log(red + "Error running {} {} {}".format(args.next, str(e), white))
-
+            sendPush("{} has changed!".format(url))
             if args.email == None:
                 log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
                 getAttentionAndBrowser(url)
@@ -197,10 +210,10 @@ try:
                 exit()
             # If the user wants email alerts
             else:
-                text = '<p>Hi!\n'+url+' has changed. Check out the new page below. To go directly, click <a href='+url+'>here</a></p>'
+                text = config.get('DEFAULT', 'email_text').replace('__url__', url)
                 # To, sub, text, html
                 # Html needs text too clients choose one of the two.
-                print(send_message(['abhure@outlook.com',args.email], url + ' has changed!',text, text + str(newText)))
+                print(send_message([config.get('DEFAULT', 'email_to'),args.email], config.get('DEFAULT', 'email_subject').replace('__url__', url) ,text, text + str(newText)))
                 log(red + "Sent an email to " + args.email + ". Restarting..." + white)
                 # Absorb changes into check file
                 # absorb changes into check variabel
