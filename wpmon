@@ -34,8 +34,9 @@ parser.set_defaults(**config[args[0].section])
 args = parser.parse_args()
 
 url = args.URL
+args.quiet = int(args.quiet)
 interval = args.interval
-USAG = config.get(args.section, 'USAG')
+USAG = args.useragent
 if (args.filename is None or args.filename == '__new__'):
     fname = "HTMLs/"+url.split('://')[1].replace('/','-')
 else:
@@ -115,6 +116,7 @@ def wait(interval):
 
 def printHeader():
     if args.quiet != 0:
+        print(args.quiet)
         return
     os.system('/usr/bin/clear')
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
