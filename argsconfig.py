@@ -14,7 +14,6 @@ def getOptions():
     parser.add_argument('-u', '--url', help='URL to page that will be monitored', required=False, default=None)
     args = parser.parse_known_args()
     sec = config[args[0].section]
-    print(args[0].url)
     if sec.get('url', None) == None and args[0].url == None:
         parser.add_argument('url', help='URL to page that will be monitored')
     parser.add_argument('-i', '--interval', default=60, help='Seconds to wait between successive checks', type=int, required=False)
