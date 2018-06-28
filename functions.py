@@ -44,8 +44,9 @@ def writeFile(path, content):
 
 def stripStupidDeltas(t):
     if args.delta != None:
-        for d in args.delta:
-            t = re.sub(d, 'Stupid Delta', t)
+#        for d in args.delta.split(','):
+         d = args.delta
+         t = re.sub(d, 'Stupid Delta', t)
     return t
 
 # returns HTML text of URL

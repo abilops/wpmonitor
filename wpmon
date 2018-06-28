@@ -74,7 +74,7 @@ try:
             if args.email == None:
                 log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
                 getAttentionAndBrowser(url)
-                # Try Ctrl-C ing this
+                # Try Ctrl-C ing this, haha!
                 while True:
                     os.system("/usr/bin/aplay {}".format(args.sound))
                     time.sleep(0.1)
