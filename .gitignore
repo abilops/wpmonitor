@@ -2,3 +2,6 @@
 HTMLs/*
 checkSiteUpdate.py.bkp
 next*
+wpmon.conf
+defaults.conf
+startMonitoring.sh
