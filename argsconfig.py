@@ -24,5 +24,6 @@ def getOptions():
     parser.add_argument('-k', '--insecure', help="Don't check website certificates. Good for indian gov websites", required=False, action='store_true')
     parser.add_argument('-M', '--trymail', help="Don't send actual email. Just simulate", required=False, action='store_true')
     parser.add_argument('-H', '--headless', help="Headless mode", required=False, default=False, action='store_true')
+    parser.add_argument('-D', '--delta', help="Regex expression to be used to replace with 'StupidDelta' in the page", action='append')
     parser.set_defaults(**config[args[0].section])
     return parser.parse_args()
