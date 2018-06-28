@@ -4,6 +4,7 @@ import time
 import os
 import sys
 import webbrowser
+from argsconfig import *
 
 def printDate():
     print(str(datetime.datetime.now()), end='-')
@@ -31,6 +32,9 @@ def writeFile(path, content):
         return None
 
 def stripStupidDeltas(t):
-    t = re.sub("<div>[\S\s]*.*quotes.*</div>", 'Stupid Quote', t)
+    if args.delta != None:
+        for d in args.delta:
+#        t = re.sub("<div>[\S\s]*.*quotes.*</div>", 'Stupid Quote', t)
+            t = re.sub(d, 'Stupid Delta', t)
     return t
 

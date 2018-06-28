@@ -8,16 +8,16 @@ import webbrowser
 import re
 import ssl
 import json
+
+# uses argparse and configparser to decide on functions
+import argsconfig
+args = argsconfig.getOptions()
 # all colours declared here
 from colours import *
 # functions related to notifications
 from notifyme import *
 # generic, simple and small functions that don't need args
 from functions import *
-
-# uses argparse and configparser to decide on functions
-import argsconfig
-args = argsconfig.getOptions()
 
 url = args.url
 interval = args.interval
@@ -55,9 +55,9 @@ def getHTML(url):
     return stripStupidDeltas(pageText)
 
 def log(text):
-	if args.quiet == 0 or text.startswith(red):
-		printDate()
-		print(text)
+    if args.quiet == 0 or text.startswith(red):
+        printDate()
+        print(text)
 
 def wait(interval):
     if args.quiet != 0:

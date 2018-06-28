@@ -1,5 +1,11 @@
 import os
+from functions import *
+import requests
+import argsconfig
+import json
 
+config = argsconfig.config
+args = argsconfig.args
 def notify(title, text):
     os.system("/usr/bin/notify-send '" + re.escape(title) + "' '"+ re.escape(text) + "'")
 
@@ -21,4 +27,3 @@ def sendPush(text):
    url = config.get('DEFAULT', 'push_url')
    r = requests.post(url, headers=hdr, data=json.dumps(payload))
    return r.text
-
