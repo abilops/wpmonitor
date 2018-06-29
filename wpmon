@@ -84,7 +84,7 @@ try:
                 text = config.get('DEFAULT', 'email_text').replace('__url__', url)
                 # To, sub, text, html
                 # Html needs text too clients choose one of the two.
-                print(send_message([config.get('DEFAULT', 'email_to'),args.email], config.get('DEFAULT', 'email_subject').replace('__url__', url) ,text, text + str(newText)))
+                log(red + "Email Response: " + send_message([config.get('DEFAULT', 'email_to'),args.email], config.get('DEFAULT', 'email_subject').replace('__url__', url) ,text, text + str(newText)))
                 log(red + "Sent an email to " + args.email + ". Restarting..." + white)
                 # Absorb changes into check file
                 # absorb changes into check variabel

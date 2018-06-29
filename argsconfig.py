@@ -1,10 +1,15 @@
 import argparse
+import os
 import configparser
 
 def getOptions():
     global config
     global sec
-    global args 
+    global args
+    # Go to the right directory
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname) 
     config = configparser.ConfigParser()
     config.read('defaults.conf')
     config.read('wpmon.conf')
