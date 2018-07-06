@@ -64,7 +64,7 @@ def opn(url):
         log(lblue + "Page Downloaded")
         return pageText # <--- Removed str if decode is applied
     except Exception as e:
-        log(red + "Cannot open URL. Are you connected to the internet? " + str(e) +  white)
+        log("{} Cannot open URL. Are you connected to the internet? {} {}".format(red, str(e), white))
         time.sleep(args.interval/4)
         return '-1'
 
@@ -81,7 +81,7 @@ def wait(interval):
         time.sleep(interval)
     else:
         for x in range(interval, 0, -1):
-            print(clearline + "Waiting for {} more seconds...".format(x), end='', flush=True)
+            print("{}Waiting for {} more seconds...".format(clearline, x), end='', flush=True)
             time.sleep(1)
         print(clearline, end='')
 
@@ -102,5 +102,5 @@ def getAttentionAndBrowser(url):
         # Turn on the screen
         os.system("/usr/bin/xset dpms force on")        
         os.system("/usr/bin/espeak 'Alert! Webpage has changed.' &")
-        notify('Webpage Monitor', args.url + ' has changed. Opening in new browser tab.\nFingers crossed!')
+        notify('Webpage Monitor', '{} has changed. Opening in new browser tab.\nFingers crossed!'.format(args.url))
         webbrowser.open_new_tab(args.url)

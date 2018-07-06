@@ -86,7 +86,7 @@ try:
 				 str(send_message([sec.get('email_to'),args.email],\
 				 sec.get('email_subject').replace('__url__', url) ,\
 				 text, text + str(newText))))
-				log(red + "Sent an email to " + args.email + ". Restarting..." + white)
+				log(red + "Sent an email to {}. Restarting...".format(args.email) + white)
 				# Absorb changes into check file
 				# absorb changes into check variabel
 				writeFile(fname, newText)
