@@ -11,7 +11,7 @@ import json
 
 # uses argparse and configparser to decide on functions
 import argsconfig
-args = argsconfig.getOptions()
+args,sec = argsconfig.getOptions()
 # all colours declared here
 from colours import *
 # generic, simple and small functions that don't need args
@@ -23,10 +23,9 @@ interval = args.interval
 USAG = args.useragent
 
 if (args.filename is None or args.filename == '__new__'):
-    fname = "HTMLs/"+url.split('://')[1].replace('/','-')
+	fname = "HTMLs/"+url.split('://')[1].replace('/','-')
 else:
-    fname = args.filename
-
+	fname = args.filename
 
 # Go to the right directory
 abspath = os.path.abspath(__file__)
@@ -34,65 +33,67 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 try:
-    printHeader(interval, fname)
-    checkEmail(args.email)
-    downloadedNewTemplate = False
-    if os.path.isfile(fname + ".changed") and args.filename != '__new__':
-        os.remove(fname)
-        os.rename(fname + ".changed", fname)
-        log("Found last change. Using that as template. Fine?")
-    elif os.path.isfile(fname) and os.stat(fname).st_size != 0 and args.filename != '__new__':
-        log("Template file found. Not creating new one.")
-        log("In fact, not even touching it now.")
-    else:
-        writeFile(fname, getHTML(url))
-        downloadedNewTemplate = True
-        log("Template file saved" + white);
-
-    while True:
-        # Didn't you just download it right now?
-        if not downloadedNewTemplate:
-            # Get new
-            newText = getHTML(url)
-        else:
-            newText = readFile(fname)
-            downloadedNewTemplate=False
-        # Read check file
-        checkText = readFile(fname)
-        if (checkText == newText):
-            log(green + "Damn! Nothing has changed yet!" + white)
-        else:
-            # Write changed to disk
-            writeFile(fname+'.changed', newText)
-            if args.next != None:
-                log("Running next script")
-                try:
-                    os.system("./{} > /dev/null 2>&1".format(args.next))
-                except Exception as e:
-                    log(red + "Error running {} {} {}".format(args.next, str(e), white))
-            sendPush("{} has changed!".format(url))
-            if args.email == None:
-                log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
-                getAttentionAndBrowser(url)
-                # Try Ctrl-C ing this, haha!
-                while True:
-                    os.system("/usr/bin/aplay {}".format(args.sound))
-                    time.sleep(0.1)
-                exit()
-            # If the user wants email alerts
-            else:
-                text = config.get('DEFAULT', 'email_text').replace('__url__', url)
-                # To, sub, text, html
-                # Html needs text too clients choose one of the two.
-                log(red + "Email Response: " + send_message([config.get('DEFAULT', 'email_to'),args.email], config.get('DEFAULT', 'email_subject').replace('__url__', url) ,text, text + str(newText)))
-                log(red + "Sent an email to " + args.email + ". Restarting..." + white)
-                # Absorb changes into check file
-                # absorb changes into check variabel
-                writeFile(fname, newText)
-#               checkText = newText
-        # Wait for however long
-        wait(interval)
+	printHeader(interval, fname)
+	checkEmail(args.email)
+	downloadedNewTemplate = False
+	if os.path.isfile(fname + ".changed") and args.filename != '__new__':
+		os.remove(fname)
+		os.rename(fname + ".changed", fname)
+		log("Found last change. Using that as template. Fine?")
+	elif os.path.isfile(fname) and os.stat(fname).st_size != 0 and args.filename != '__new__':
+		log("Template file found. Not creating new one.")
+		log("In fact, not even touching it now.")
+	else:
+		writeFile(fname, getHTML(url))
+		downloadedNewTemplate = True
+		log("Template file saved" + white);
+	while True:
+	# Didn't you just download it right now?
+		if not downloadedNewTemplate:
+			# Get new
+			newText = getHTML(url)
+		else:
+			newText = readFile(fname)
+			downloadedNewTemplate=False
+		# Read check file
+		checkText = readFile(fname)
+		if (checkText == newText):
+			log(green + "Damn! Nothing has changed yet!" + white)
+		else:
+			# Write changed to disk
+			writeFile(fname+'.changed', newText)
+			if args.next != None:
+				log("Running next script")
+				try:
+					os.system("./{} > /dev/null 2>&1".format(args.next))
+				except Exception as e:
+					log(red + "Error running {} {} {}".format(args.next, str(e), white))
+			sendPush("{} has changed!".format(url))
+			if args.email == None:
+				log(red + "WEBPAGE HAS CHANGED! GO CHECK IT NOW" + white)
+				getAttentionAndBrowser(url)
+				# Try Ctrl-C ing this, haha!
+				while True:
+					os.system("/usr/bin/aplay {}".format(args.sound))
+					time.sleep(0.1)
+				exit()
+			# If the user wants email alerts
+			else:
+				text = sec.get('email_text').replace('__url__', url)
+				# To, sub, text, html
+				# Html needs text too clients choose one of the two.
+				log(red + "Email Response: " +\
+				 str(send_message([sec.get('email_to'),args.email],\
+				 sec.get('email_subject').replace('__url__', url) ,\
+				 text, text + str(newText))))
+				log(red + "Sent an email to " + args.email + ". Restarting..." + white)
+				# Absorb changes into check file
+				# absorb changes into check variabel
+				writeFile(fname, newText)
+				#checkText = newText
+		# Wait for however long
+		wait(interval)
 except Exception as e:
-    log(red + "There is some kind of error (I mean\n" + str(e) + "). Exiting..." + white)
-    notify('Webpage Monitor', 'Crashed due to ' + str(e))
-    exit()
+	log(red + "There is some kind of error (I mean\n" + str(e) + "). Exiting..." + white)
+	notify('Webpage Monitor', 'Crashed due to ' + str(e))
+	exit()

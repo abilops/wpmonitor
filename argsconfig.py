@@ -10,7 +10,7 @@ def getOptions():
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname) 
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
     config.read('defaults.conf')
     config.read('wpmon.conf')
 
@@ -33,4 +33,4 @@ def getOptions():
     parser.add_argument('-D', '--delta', help="Regex expression to be used to replace with 'StupidDelta' in the page", action='append', default=None)
     parser.set_defaults(**config[args[0].section])
     args = parser.parse_args()
-    return args
+    return args,sec
