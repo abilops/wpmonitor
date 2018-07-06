@@ -4,4 +4,6 @@ checkSiteUpdate.py.bkp
 next*
 wpmon.conf
 defaults.conf
+*.swp
+.fuse*
 startMonitoring.sh
