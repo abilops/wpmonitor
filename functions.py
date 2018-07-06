@@ -1,6 +1,6 @@
 import re
 import time
-import datetime
+from datetime import datetime
 import os
 import sys
 import webbrowser
@@ -9,17 +9,12 @@ import webbrowser
 import ssl
 import json
 import requests
-
 from colours import *
 from argsconfig import *
 
 def log(text):
     if args.quiet == 0 or text.startswith(red):
-        printDate()
-        print(text)
-
-def printDate():
-    print(str(datetime.datetime.now()), end='-')
+        print("{}-{}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'),text))
 
 def checkEmail(email):
     if email != None:

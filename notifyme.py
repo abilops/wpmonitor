@@ -6,6 +6,8 @@ import json
 
 config = argsconfig.config
 args = argsconfig.args
+sec = argsconfig.sec
+
 def notify(title, text):
     os.system("/usr/bin/notify-send '" + re.escape(title) + "' '"+ re.escape(text) + "'")
 
