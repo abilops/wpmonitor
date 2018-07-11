@@ -16,6 +16,8 @@ args,sec = argsconfig.getOptions()
 from colours import *
 # generic, simple and small functions that don't need args
 from functions import *
+# function for comparing
+from wtd import *
 # functions related to notifications
 from notifyme import *
 url = args.url
@@ -79,7 +81,7 @@ try:
 				exit()
 			# If the user wants email alerts
 			else:
-				text = sec.get('email_text').replace('__url__', url)
+				text = str(compareHTML(checkText, newText)) + sec.get('email_text').replace('__url__', url)
 				# To, sub, text, html
 				# Html needs text too clients choose one of the two.
 				log(red + "Email Response: " +\

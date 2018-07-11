@@ -86,7 +86,7 @@ def printHeader(interval, fname):
     os.system('/usr/bin/clear')
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     print(green + "WEBPAGE MONITOR v1.0" + white)
-    print(green + "Not refreshing any more!!" + white)
+    print(green + "DON'T PANIC" + white)
     print("URL: " + lblue + args.url + white)
     print("Interval: " + lblue + str(interval) + " seconds" + white)
     print("File: " + lblue + fname + white)
