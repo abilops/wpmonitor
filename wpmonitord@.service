@@ -1,0 +1,9 @@
+[Unit]
+Description=WPMonitor - Checks webpages periodically and notifies after changes
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/wpmon -c %i
+
+[Install]
+WantedBy=multi-user.target

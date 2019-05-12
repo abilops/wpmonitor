@@ -1,4 +1,13 @@
 #Ignore all ending in o and a
 HTMLs/*
+__pycache__/*
+*.pyc
 checkSiteUpdate.py.bkp
 next*
+wpmon.conf
+defaults.conf
+*.swp
+.fuse*
+startMonitoring.sh
+
+>>>>>>> config
