@@ -12,6 +12,7 @@ import json
 # uses argparse and configparser to decide on functions
 import argsconfig
 args,sec = argsconfig.getOptions()
+print(args)
 # all colours declared here
 from colours import *
 # generic, simple and small functions that don't need args
