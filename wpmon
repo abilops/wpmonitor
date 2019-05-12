@@ -24,7 +24,6 @@ from notifyme import *
 url = args.url
 interval = args.interval
 USAG = args.useragent
->>>>>>> config
 
 if (args.filename is None or args.filename == '__new__'):
 	fname = "HTMLs/"+url.split('://')[1].replace('/','-')
