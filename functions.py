@@ -37,14 +37,16 @@ def writeFile(path, content):
     except:
         return None
 
-def stripStupidDeltas(t):
-    if args.delta != None:
+def stripStupidDeltas(text):
+    if args.delta == None::
+        return text
+    else:
 #        for d in args.delta.split(','):
-         d = args.delta
-         t = re.sub(d, 'Stupid Delta', t)
-    return t
+         delta = args.delta
+         stripped = re.sub(delta, 'Stupid Delta', text)
+         return stripped
 
-# returns HTML text of URL
+# returns HTML text of URL, or the text '-1' if it can't for some reason
 def opn(url):
     try:
         ctx = ssl.create_default_context()
@@ -60,13 +62,13 @@ def opn(url):
         return pageText # <--- Removed str if decode is applied
     except Exception as e:
         log("{} Cannot open URL. Are you connected to the internet? {} {}".format(red, str(e), white))
-        time.sleep(args.interval/4)
         return '-1'
 
-# is RESPONSIBLE for returning HTML
+# is __responsible__ for returning HTML
 def getHTML(url):
     pageText = '-1'
     while pageText == '-1':
+        time.sleep(args.interval/4)
         pageText = opn(url)
     return stripStupidDeltas(pageText)
 

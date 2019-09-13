@@ -26,6 +26,7 @@ url = args.url
 interval = args.interval
 USAG = args.useragent
 
+# TODO Shouldn't this be in argparse?
 if (args.filename is None or args.filename == '__new__'):
 	try:
 		fname = url.split('://')[1].replace('/','-')
