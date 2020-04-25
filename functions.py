@@ -38,7 +38,7 @@ def writeFile(path, content):
         return None
 
 def stripStupidDeltas(text):
-    if args.delta == None::
+    if args.delta == None:
         return text
     else:
 #        for d in args.delta.split(','):
